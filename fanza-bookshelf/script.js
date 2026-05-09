@@ -4,17 +4,12 @@
   var STORAGE_KEY = "fanzaBookshelf.items.v1";
   var CORRUPTED_PREFIX = "fanzaBookshelf.corrupted.";
   var USER_FIELDS = ["status", "favorite", "memo"];
-  var STATUSES = {
-    unread: "未読",
-    reading: "途中",
-    completed: "読了"
-  };
+  var VALID_STATUSES = ["unread", "reading", "completed"];
 
   var state = {
     items: [],
     filters: {
       query: "",
-      status: "all",
       favoriteOnly: false,
       tag: "all",
       sort: "purchaseDateDesc",
@@ -32,7 +27,6 @@
       importButton: document.getElementById("importButton"),
       exportButton: document.getElementById("exportButton"),
       searchInput: document.getElementById("searchInput"),
-      statusFilter: document.getElementById("statusFilter"),
       favoriteOnly: document.getElementById("favoriteOnly"),
       tagFilter: document.getElementById("tagFilter"),
       sortSelect: document.getElementById("sortSelect"),
@@ -100,11 +94,6 @@
 
     elements.searchInput.addEventListener("input", function (event) {
       state.filters.query = event.target.value.trim();
-      render();
-    });
-
-    elements.statusFilter.addEventListener("change", function (event) {
-      state.filters.status = event.target.value;
       render();
     });
 
@@ -251,7 +240,7 @@
       maker: toCleanString(raw.maker),
       purchaseDate: normalizeDate(raw.purchaseDate),
       tags: uniqueTags(Array.isArray(raw.tags) ? raw.tags : String(raw.tags || "").split(",")),
-      status: STATUSES[raw.status] ? raw.status : "unread",
+      status: VALID_STATUSES.indexOf(raw.status) >= 0 ? raw.status : "unread",
       favorite: Boolean(raw.favorite),
       memo: toCleanString(raw.memo),
       source: toCleanString(raw.source) || "fanza",
@@ -294,9 +283,6 @@
   function applyFiltersAndSort(items) {
     var query = state.filters.query.toLowerCase();
     var filtered = items.filter(function (item) {
-      if (state.filters.status !== "all" && item.status !== state.filters.status) {
-        return false;
-      }
       if (state.filters.favoriteOnly && !item.favorite) {
         return false;
       }
@@ -377,7 +363,6 @@
 
     var badgeRow = document.createElement("div");
     badgeRow.className = "badge-row";
-    badgeRow.appendChild(createStatusBadge(item.status));
     item.tags.slice(0, 3).forEach(function (tag) {
       var badge = document.createElement("span");
       badge.className = "tag-badge";
@@ -406,13 +391,6 @@
     parent.appendChild(span);
   }
 
-  function createStatusBadge(status) {
-    var badge = document.createElement("span");
-    badge.className = "status-badge status-" + status;
-    badge.textContent = STATUSES[status] || STATUSES.unread;
-    return badge;
-  }
-
   function createCardActions(item) {
     var actions = document.createElement("div");
     actions.className = "card-actions";
@@ -428,17 +406,6 @@
       updateItem(item.id, { favorite: !item.favorite });
     });
     actions.appendChild(favoriteButton);
-
-    var statusSelect = document.createElement("select");
-    statusSelect.className = "small-select";
-    Object.keys(STATUSES).forEach(function (status) {
-      appendOption(statusSelect, status, STATUSES[status]);
-    });
-    statusSelect.value = item.status;
-    statusSelect.addEventListener("change", function () {
-      updateItem(item.id, { status: statusSelect.value });
-    });
-    actions.appendChild(statusSelect);
 
     var link = document.createElement("a");
     link.className = "link-button";

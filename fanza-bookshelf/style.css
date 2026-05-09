@@ -281,8 +281,7 @@ input[type="checkbox"] {
   gap: 5px;
 }
 
-.tag-badge,
-.status-badge {
+.tag-badge {
   max-width: 100%;
   overflow: hidden;
   padding: 2px 6px;
@@ -298,34 +297,11 @@ input[type="checkbox"] {
   color: #dce3ef;
 }
 
-.status-badge {
-  color: #101319;
-  font-weight: 700;
-}
-
-.status-unread {
-  background: #b8c0cf;
-}
-
-.status-reading {
-  background: var(--warning);
-}
-
-.status-completed {
-  background: var(--success);
-}
-
 .card-actions {
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 6px;
-}
-
-.small-select {
-  min-height: 30px;
-  padding: 4px 6px;
-  font-size: 0.78rem;
 }
 
 .empty-state {

@@ -210,7 +210,9 @@ input[type="checkbox"] {
 .cover-wrap {
   position: relative;
   aspect-ratio: 3 / 4;
-  background: #0d1016;
+  background:
+    radial-gradient(circle at 50% 35%, rgb(255 255 255 / 7%), transparent 44%),
+    #0d1016;
 }
 
 .cover-wrap.hidden-cover {
@@ -221,7 +223,7 @@ input[type="checkbox"] {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .cover-placeholder {

@@ -355,18 +355,6 @@
       coverWrap.appendChild(createCoverPlaceholder());
     }
 
-    var favoriteButton = document.createElement("button");
-    favoriteButton.type = "button";
-    favoriteButton.className = "favorite-button";
-    favoriteButton.classList.toggle("is-active", item.favorite);
-    favoriteButton.title = "お気に入り";
-    favoriteButton.setAttribute("aria-label", "お気に入りを切り替え");
-    favoriteButton.textContent = "★";
-    favoriteButton.addEventListener("click", function () {
-      updateItem(item.id, { favorite: !item.favorite });
-    });
-    coverWrap.appendChild(favoriteButton);
-
     var body = document.createElement("div");
     body.className = "card-body";
 
@@ -377,14 +365,20 @@
 
     var meta = document.createElement("div");
     meta.className = "meta";
-    appendMeta(meta, item.maker || "メーカー未設定");
-    appendMeta(meta, item.purchaseDate || "購入日未設定");
-    body.appendChild(meta);
+    if (item.maker) {
+      appendMeta(meta, item.maker);
+    }
+    if (item.purchaseDate) {
+      appendMeta(meta, item.purchaseDate);
+    }
+    if (meta.childElementCount) {
+      body.appendChild(meta);
+    }
 
     var badgeRow = document.createElement("div");
     badgeRow.className = "badge-row";
     badgeRow.appendChild(createStatusBadge(item.status));
-    item.tags.slice(0, 8).forEach(function (tag) {
+    item.tags.slice(0, 3).forEach(function (tag) {
       var badge = document.createElement("span");
       badge.className = "tag-badge";
       badge.textContent = tag;
@@ -451,7 +445,7 @@
     link.href = item.url || "#";
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.textContent = "作品ページ";
+    link.textContent = "開く";
     if (!item.url) {
       link.setAttribute("aria-disabled", "true");
       link.addEventListener("click", function (event) {

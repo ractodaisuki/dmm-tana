@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My FANZA Bookshelf</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="title-block">
+          <h1>My FANZA Bookshelf</h1>
+          <p id="summaryText">0 items</p>
+        </div>
+        <div class="header-actions">
+          <input id="importInput" class="visually-hidden" type="file" accept="application/json,.json">
+          <button id="importButton" class="button primary" type="button">JSONインポート</button>
+          <button id="exportButton" class="button" type="button">JSONエクスポート</button>
+        </div>
+      </header>
+
+      <section class="toolbar" aria-label="本棚の操作">
+        <label class="field search-field">
+          <span>検索</span>
+          <input id="searchInput" type="search" placeholder="タイトル、メーカー、タグ、メモ">
+        </label>
+        <label class="field">
+          <span>ステータス</span>
+          <select id="statusFilter">
+            <option value="all">全作品</option>
+            <option value="unread">未読</option>
+            <option value="reading">途中</option>
+            <option value="completed">読了</option>
+          </select>
+        </label>
+        <label class="field checkbox-field">
+          <input id="favoriteOnly" type="checkbox">
+          <span>お気に入りのみ</span>
+        </label>
+        <label class="field">
+          <span>タグ/ジャンル</span>
+          <select id="tagFilter">
+            <option value="all">すべて</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>ソート</span>
+          <select id="sortSelect">
+            <option value="purchaseDateDesc">購入日 新しい順</option>
+            <option value="purchaseDateAsc">購入日 古い順</option>
+            <option value="titleAsc">タイトル順</option>
+            <option value="updatedAtDesc">更新日順</option>
+            <option value="favoriteDesc">お気に入り優先</option>
+          </select>
+        </label>
+        <label class="field checkbox-field">
+          <input id="hideThumbnails" type="checkbox">
+          <span>サムネイル非表示</span>
+        </label>
+      </section>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <main>
+        <div id="emptyState" class="empty-state">
+          <h2>本棚は空です</h2>
+          <p>userscriptで出力したJSON、または sample-data.json をインポートしてください。</p>
+        </div>
+        <section id="booksGrid" class="books-grid" aria-label="作品一覧"></section>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

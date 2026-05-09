@@ -1,0 +1,67 @@
+[
+  {
+    "id": "fanza_sample_001",
+    "title": "星明かりの読書ノート",
+    "url": "https://example.com/fanza/sample-001",
+    "thumbnail": "https://placehold.co/480x640/243447/eef2f8?text=Sample+01",
+    "maker": "ミッドナイト工房",
+    "purchaseDate": "2026-05-09",
+    "tags": ["同人", "音声", "短編"],
+    "status": "unread",
+    "favorite": false,
+    "memo": "",
+    "source": "fanza"
+  },
+  {
+    "id": "fanza_sample_002",
+    "title": "雨の日アーカイブ",
+    "url": "https://example.com/fanza/sample-002",
+    "thumbnail": "https://placehold.co/480x640/384052/f6d365?text=Sample+02",
+    "maker": "北窓レーベル",
+    "purchaseDate": "2026-04-21",
+    "tags": ["コミック", "シリーズ", "お気に入り候補"],
+    "status": "reading",
+    "favorite": true,
+    "memo": "次回ここから続き。",
+    "source": "fanza"
+  },
+  {
+    "id": "fanza_sample_003",
+    "title": "週末ライブラリ 03",
+    "url": "https://example.com/fanza/sample-003",
+    "thumbnail": "https://placehold.co/480x640/263a2f/d7f5e3?text=Sample+03",
+    "maker": "サンプル出版",
+    "purchaseDate": "2026-03-18",
+    "tags": ["CG", "単品"],
+    "status": "completed",
+    "favorite": false,
+    "memo": "読了済み。",
+    "source": "fanza"
+  },
+  {
+    "id": "fanza_sample_004",
+    "title": "夜間倉庫のカタログ",
+    "url": "https://example.com/fanza/sample-004",
+    "thumbnail": "https://placehold.co/480x640/4a2f35/f8d7de?text=Sample+04",
+    "maker": "テストサークル",
+    "purchaseDate": "2025-12-30",
+    "tags": ["同人", "資料", "長編"],
+    "status": "unread",
+    "favorite": false,
+    "memo": "",
+    "source": "fanza"
+  },
+  {
+    "id": "fanza_sample_005",
+    "title": "月次コレクション管理帳",
+    "url": "https://example.com/fanza/sample-005",
+    "thumbnail": "https://placehold.co/480x640/2f3a4c/d9e8ff?text=Sample+05",
+    "maker": "青葉スタジオ",
+    "purchaseDate": "2025-10-02",
+    "tags": ["コミック", "管理用", "再確認"],
+    "status": "reading",
+    "favorite": true,
+    "memo": "タグ整理のサンプル。",
+    "source": "fanza"
+  }
+]

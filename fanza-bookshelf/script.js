@@ -392,7 +392,6 @@
     });
     body.appendChild(badgeRow);
 
-    body.appendChild(createEditArea(item));
     body.appendChild(createCardActions(item));
 
     card.appendChild(coverWrap);
@@ -418,33 +417,6 @@
     badge.className = "status-badge status-" + status;
     badge.textContent = STATUSES[status] || STATUSES.unread;
     return badge;
-  }
-
-  function createEditArea(item) {
-    var editArea = document.createElement("div");
-    editArea.className = "edit-area";
-
-    var tagLabel = document.createElement("label");
-    tagLabel.textContent = "タグ";
-    var tagInput = document.createElement("textarea");
-    tagInput.value = item.tags.join(", ");
-    tagInput.addEventListener("change", function () {
-      updateItem(item.id, { tags: uniqueTags(tagInput.value.split(",")) });
-    });
-    tagLabel.appendChild(tagInput);
-    editArea.appendChild(tagLabel);
-
-    var memoLabel = document.createElement("label");
-    memoLabel.textContent = "メモ";
-    var memoInput = document.createElement("textarea");
-    memoInput.value = item.memo;
-    memoInput.addEventListener("input", debounce(function () {
-      updateItem(item.id, { memo: memoInput.value }, true);
-    }, 450));
-    memoLabel.appendChild(memoInput);
-    editArea.appendChild(memoLabel);
-
-    return editArea;
   }
 
   function createCardActions(item) {
@@ -609,14 +581,4 @@
     return score;
   }
 
-  function debounce(fn, delay) {
-    var timer = 0;
-    return function () {
-      var args = arguments;
-      window.clearTimeout(timer);
-      timer = window.setTimeout(function () {
-        fn.apply(null, args);
-      }, delay);
-    };
-  }
 })();

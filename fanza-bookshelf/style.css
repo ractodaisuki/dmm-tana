@@ -328,18 +328,6 @@ input[type="checkbox"] {
   background: var(--success);
 }
 
-.edit-area {
-  display: grid;
-  gap: 8px;
-}
-
-.edit-area label {
-  display: grid;
-  gap: 4px;
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
 .card-actions {
   display: flex;
   align-items: center;

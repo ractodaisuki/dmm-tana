@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         FANZA Purchase Bookshelf Exporter
 // @namespace    https://github.com/local/fanza-bookshelf
-// @version      1.0.2
-// @description  FANZAの購入一覧で、画面に表示されている作品メタ情報だけを本棚用JSONとして出力します。
+// @version      1.0.3
+// @description  FANZA/DMMブックスの一覧で、画面に表示されている作品メタ情報だけを本棚用JSONとして出力します。
 // @match        https://*.dmm.co.jp/*
+// @match        https://*.dmm.com/*
 // @match        https://*.fanza.co.jp/*
 // @run-at       document-idle
 // @grant        none
@@ -92,8 +93,17 @@
       ".m-boxListProductProduct",
       ".productList__item",
       ".d-item",
+      "[data-product-id]",
+      "[data-content-id]",
+      "[data-item-id]",
+      "li[class*='Product']",
+      "div[class*='Product']",
       "li[class*='product']",
       "div[class*='product']",
+      "li[class*='Book']",
+      "div[class*='Book']",
+      "li[class*='book']",
+      "div[class*='book']",
       "article",
       "li[class*='item']",
       "div[class*='item']"
@@ -115,7 +125,7 @@
       if (!isProductUrl(anchor.href)) {
         return;
       }
-      var card = anchor.closest("li, article, div") || anchor;
+      var card = findProductCard(anchor);
       addIfProductLike(card, cards, seen);
     });
 
@@ -127,17 +137,18 @@
       return;
     }
     var anchor = findProductAnchor(node);
-    var img = node.querySelector("img");
+    var thumbnail = findThumbnailUrl(node);
     var productHrefs = unique(Array.prototype.slice.call(node.querySelectorAll("a[href]")).map(function (anchorNode) {
       return isProductUrl(anchorNode.href) ? anchorNode.href : "";
     }));
-    if (!anchor || !img || isBlockedImage(img)) {
+    var title = getTitleCandidate(node, anchor);
+    if (!anchor || (!thumbnail && !title)) {
       return;
     }
-    if (productHrefs.length > 2) {
+    if (productHrefs.length > 3) {
       return;
     }
-    if ((node.textContent || "").trim().length < 2) {
+    if (!title && (node.textContent || "").trim().length < 2) {
       return;
     }
     seen.add(node);
@@ -151,16 +162,7 @@
     }
 
     var url = absoluteUrl(anchor.getAttribute("href"));
-    var img = card.querySelector("img");
-    var title = firstText(card, [
-      "[class*='title']",
-      "[class*='ttl']",
-      "h1",
-      "h2",
-      "h3",
-      "a[title]",
-      "a"
-    ]) || clean(anchor.getAttribute("title")) || clean(anchor.getAttribute("aria-label")) || clean(img && img.getAttribute("alt"));
+    var title = getTitleCandidate(card, anchor);
 
     if (!title) {
       return null;
@@ -170,11 +172,14 @@
       "[class*='maker']",
       "[class*='circle']",
       "[class*='author']",
+      "[class*='Author']",
+      "[class*='writer']",
+      "[class*='publisher']",
       "[class*='brand']",
       "[class*='label']"
     ]);
     var purchaseDate = findDate(card.textContent || "");
-    var thumbnail = imageUrl(img);
+    var thumbnail = findThumbnailUrl(card);
     if (thumbnail && BLOCKED_IMAGE_RE.test(thumbnail)) {
       thumbnail = "";
     }
@@ -192,7 +197,7 @@
       status: "unread",
       favorite: false,
       memo: "",
-      source: "fanza"
+      source: isDmmBooksUrl(url) ? "dmm_books" : "fanza"
     };
   }
 
@@ -214,8 +219,52 @@
     return /[?&](?:cid|product_id|content_id)=|\/(?:detail|product)\//i.test(text);
   }
 
+  function isDmmBooksUrl(url) {
+    return /book\.dmm\.(?:co\.jp|com)\/(?:product|detail|shelf)/i.test(url || "");
+  }
+
+  function findProductCard(anchor) {
+    var current = anchor;
+    for (var depth = 0; current && depth < 8; depth += 1) {
+      if (current.nodeType !== 1) {
+        current = current.parentElement;
+        continue;
+      }
+      var productLinks = unique(Array.prototype.slice.call(current.querySelectorAll("a[href]")).map(function (link) {
+        return isProductUrl(link.href) ? link.href : "";
+      }));
+      if (productLinks.length >= 1 && productLinks.length <= 3 && (findThumbnailUrl(current) || getTitleCandidate(current, anchor))) {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return anchor.closest("li, article, div") || anchor;
+  }
+
   function isBlockedImage(img) {
     return BLOCKED_IMAGE_RE.test(imageUrl(img));
+  }
+
+  function getTitleCandidate(card, anchor) {
+    var img = findImageElement(card);
+    return firstText(card, [
+      "[class*='title']",
+      "[class*='Title']",
+      "[class*='ttl']",
+      "[class*='Ttl']",
+      "[data-title]",
+      "[aria-label]",
+      "h1",
+      "h2",
+      "h3",
+      "a[title]",
+      "a"
+    ]) ||
+      clean(anchor && anchor.getAttribute("title")) ||
+      clean(anchor && anchor.getAttribute("aria-label")) ||
+      clean(anchor && anchor.getAttribute("data-title")) ||
+      clean(card && card.getAttribute("data-title")) ||
+      clean(img && img.getAttribute("alt"));
   }
 
   function firstText(root, selectors) {
@@ -224,7 +273,10 @@
       if (!node) {
         continue;
       }
-      var value = clean(node.getAttribute("title")) || clean(node.textContent);
+      var value = clean(node.getAttribute("title")) ||
+        clean(node.getAttribute("aria-label")) ||
+        clean(node.getAttribute("data-title")) ||
+        clean(node.textContent);
       if (value && value.length <= 160) {
         return value;
       }
@@ -285,6 +337,60 @@
       })[0];
 
     return best ? best.url : "";
+  }
+
+  function findThumbnailUrl(root) {
+    var img = findImageElement(root);
+    var candidates = [];
+    if (img) {
+      addImageCandidate(candidates, imageUrl(img), 900);
+    }
+
+    Array.prototype.slice.call(root.querySelectorAll ? root.querySelectorAll("[style], [data-bg], [data-background], [data-background-image], [data-original], [data-src]") : []).forEach(function (node) {
+      addImageCandidate(candidates, node.getAttribute("data-bg"), 760);
+      addImageCandidate(candidates, node.getAttribute("data-background"), 760);
+      addImageCandidate(candidates, node.getAttribute("data-background-image"), 760);
+      addImageCandidate(candidates, backgroundImageUrl(node), 700);
+    });
+
+    addImageCandidate(candidates, backgroundImageUrl(root), 650);
+
+    var best = candidates
+      .filter(function (candidate) {
+        return candidate.url && !BLOCKED_IMAGE_RE.test(candidate.url);
+      })
+      .sort(function (a, b) {
+        return imageScore(b) - imageScore(a);
+      })[0];
+
+    return best ? best.url : "";
+  }
+
+  function findImageElement(root) {
+    if (!root) {
+      return null;
+    }
+    if (root.matches && root.matches("img") && !isBlockedImage(root)) {
+      return root;
+    }
+    return Array.prototype.slice.call(root.querySelectorAll ? root.querySelectorAll("img") : []).find(function (img) {
+      return !isBlockedImage(img);
+    }) || null;
+  }
+
+  function backgroundImageUrl(node) {
+    if (!node || !window.getComputedStyle) {
+      return "";
+    }
+    var styleValue = clean(node.getAttribute("style"));
+    var computedValue = "";
+    try {
+      computedValue = window.getComputedStyle(node).backgroundImage;
+    } catch (error) {
+      computedValue = "";
+    }
+    var match = (styleValue + " " + computedValue).match(/url\((['"]?)(.*?)\1\)/i);
+    return match ? absoluteUrl(match[2]) : "";
   }
 
   function addPictureSourceCandidates(candidates, img) {
@@ -359,13 +465,15 @@
 
     var patterns = [
       /[?&](?:cid|product_id)=([A-Za-z0-9_-]+)/i,
+      /[?&]content_id=([A-Za-z0-9_-]+)/i,
       /\/(?:cid|product_id)\/([A-Za-z0-9_-]+)/i,
+      /\/product\/([^/?#]+)\/([^/?#]+)/i,
       /\b(RJ\d{5,}|VJ\d{5,}|BJ\d{5,}|d_\d{5,}|[a-z]{2,}_\d{3,}|[a-z]{3,}\d{3,})\b/i
     ];
     for (var i = 0; i < patterns.length; i += 1) {
       var match = decoded.match(patterns[i]);
       if (match) {
-        return "fanza_" + match[1].toLowerCase();
+        return "fanza_" + (match[2] ? match[1] + "_" + match[2] : match[1]).toLowerCase();
       }
     }
     return url ? "fanza_" + hashString(url) : "";

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FANZA Purchase Bookshelf Exporter
 // @namespace    https://github.com/local/fanza-bookshelf
-// @version      1.0.1
+// @version      1.0.2
 // @description  FANZAの購入一覧で、画面に表示されている作品メタ情報だけを本棚用JSONとして出力します。
 // @match        https://*.dmm.co.jp/*
 // @match        https://*.fanza.co.jp/*
@@ -264,14 +264,89 @@
     if (!img) {
       return "";
     }
-    return absoluteUrl(
-      img.currentSrc ||
-      img.getAttribute("src") ||
-      img.getAttribute("data-src") ||
-      img.getAttribute("data-original") ||
-      img.getAttribute("data-lazy") ||
-      ""
-    );
+    var candidates = [];
+    addImageCandidate(candidates, img.getAttribute("data-original"), 900);
+    addImageCandidate(candidates, img.getAttribute("data-master"), 850);
+    addImageCandidate(candidates, img.getAttribute("data-large"), 820);
+    addImageCandidate(candidates, img.getAttribute("data-src"), 700);
+    addImageCandidate(candidates, img.getAttribute("data-lazy"), 650);
+    addSrcsetCandidates(candidates, img.getAttribute("data-srcset"));
+    addSrcsetCandidates(candidates, img.getAttribute("srcset"));
+    addPictureSourceCandidates(candidates, img);
+    addImageCandidate(candidates, img.currentSrc, 500);
+    addImageCandidate(candidates, img.getAttribute("src"), 300);
+
+    var best = candidates
+      .filter(function (candidate) {
+        return candidate.url && !BLOCKED_IMAGE_RE.test(candidate.url);
+      })
+      .sort(function (a, b) {
+        return imageScore(b) - imageScore(a);
+      })[0];
+
+    return best ? best.url : "";
+  }
+
+  function addPictureSourceCandidates(candidates, img) {
+    var picture = img.closest && img.closest("picture");
+    if (!picture) {
+      return;
+    }
+    picture.querySelectorAll("source").forEach(function (source) {
+      addSrcsetCandidates(candidates, source.getAttribute("srcset"));
+      addSrcsetCandidates(candidates, source.getAttribute("data-srcset"));
+    });
+  }
+
+  function addSrcsetCandidates(candidates, srcset) {
+    clean(srcset).split(",").forEach(function (part) {
+      var tokens = clean(part).split(/\s+/);
+      var url = tokens[0];
+      var descriptor = tokens[1] || "";
+      var weight = 450;
+      var widthMatch = descriptor.match(/^(\d+)w$/);
+      var densityMatch = descriptor.match(/^([\d.]+)x$/);
+      if (widthMatch) {
+        weight = Number(widthMatch[1]);
+      } else if (densityMatch) {
+        weight = Math.round(Number(densityMatch[1]) * 500);
+      }
+      addImageCandidate(candidates, url, weight);
+    });
+  }
+
+  function addImageCandidate(candidates, value, weight) {
+    var url = improveImageUrl(absoluteUrl(value));
+    if (!url) {
+      return;
+    }
+    candidates.push({
+      url: url,
+      weight: weight || 0
+    });
+  }
+
+  function improveImageUrl(url) {
+    if (!url || !/dmm|fanza|pics|doujin-assets/i.test(url)) {
+      return url;
+    }
+    // DMM/FANZA package thumbnails often use ps/pt suffixes. pl is the larger package image.
+    return url.replace(/p[st](\.(?:jpg|jpeg|png|webp)(?:\?.*)?)$/i, "pl$1");
+  }
+
+  function imageScore(candidate) {
+    var url = candidate.url || "";
+    var score = candidate.weight || 0;
+    if (/p[lx](\.(?:jpg|jpeg|png|webp)(?:\?.*)?)$/i.test(url)) {
+      score += 700;
+    }
+    if (/(large|original|master|package|jacket|cover)/i.test(url)) {
+      score += 250;
+    }
+    if (/\.(?:svg|gif)(?:\?|$)/i.test(url)) {
+      score -= 1000;
+    }
+    return score;
   }
 
   function extractId(url) {

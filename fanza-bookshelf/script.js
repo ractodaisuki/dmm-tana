@@ -214,13 +214,17 @@
 
   function mergeExistingItem(existing, incoming) {
     var merged = Object.assign({}, existing);
-    var metadataFields = ["title", "url", "thumbnail", "maker", "purchaseDate", "source"];
+    var metadataFields = ["title", "url", "maker", "purchaseDate", "source"];
 
     metadataFields.forEach(function (field) {
       if (!merged[field] && incoming[field]) {
         merged[field] = incoming[field];
       }
     });
+
+    if (incoming.thumbnail && imageQualityScore(incoming.thumbnail) > imageQualityScore(existing.thumbnail)) {
+      merged.thumbnail = incoming.thumbnail;
+    }
 
     merged.tags = uniqueTags([].concat(existing.tags || [], incoming.tags || []));
     USER_FIELDS.forEach(function (field) {
@@ -579,6 +583,30 @@
       hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
     }
     return (hash >>> 0).toString(36);
+  }
+
+  function imageQualityScore(url) {
+    var text = toCleanString(url);
+    if (!text) {
+      return 0;
+    }
+    var score = 100;
+    if (/navismithapis-cdn\.com|\/img\/.*\.svg/i.test(text)) {
+      score -= 1000;
+    }
+    if (/p[lx](\.(?:jpg|jpeg|png|webp)(?:\?.*)?)$/i.test(text)) {
+      score += 700;
+    }
+    if (/p[st](\.(?:jpg|jpeg|png|webp)(?:\?.*)?)$/i.test(text)) {
+      score += 250;
+    }
+    if (/(large|original|master|package|jacket|cover)/i.test(text)) {
+      score += 250;
+    }
+    if (/\.(?:svg|gif)(?:\?|$)/i.test(text)) {
+      score -= 500;
+    }
+    return score;
   }
 
   function debounce(fn, delay) {

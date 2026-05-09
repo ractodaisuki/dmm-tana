@@ -322,6 +322,22 @@
   function createBookCard(item) {
     var card = document.createElement("article");
     card.className = "book-card";
+    if (item.url) {
+      card.tabIndex = 0;
+      card.setAttribute("role", "link");
+      card.setAttribute("aria-label", item.title + " を開く");
+      card.addEventListener("click", function (event) {
+        if (!isInteractiveTarget(event.target)) {
+          openItemUrl(item.url);
+        }
+      });
+      card.addEventListener("keydown", function (event) {
+        if ((event.key === "Enter" || event.key === " ") && !isInteractiveTarget(event.target)) {
+          event.preventDefault();
+          openItemUrl(item.url);
+        }
+      });
+    }
 
     var coverWrap = document.createElement("div");
     coverWrap.className = "cover-wrap";
@@ -341,6 +357,19 @@
       coverWrap.appendChild(createCoverPlaceholder());
     }
 
+    var favoriteButton = document.createElement("button");
+    favoriteButton.type = "button";
+    favoriteButton.className = "favorite-hover-button";
+    favoriteButton.classList.toggle("is-active", item.favorite);
+    favoriteButton.title = "お気に入り";
+    favoriteButton.setAttribute("aria-label", "お気に入りを切り替え");
+    favoriteButton.textContent = "★";
+    favoriteButton.addEventListener("click", function (event) {
+      event.stopPropagation();
+      updateItem(item.id, { favorite: !item.favorite });
+    });
+    coverWrap.appendChild(favoriteButton);
+
     var body = document.createElement("div");
     body.className = "card-body";
 
@@ -352,7 +381,7 @@
     var meta = document.createElement("div");
     meta.className = "meta";
     if (item.maker) {
-      appendMeta(meta, item.maker);
+      meta.appendChild(createMakerButton(item.maker));
     }
     if (item.purchaseDate) {
       appendMeta(meta, item.purchaseDate);
@@ -370,8 +399,6 @@
       badgeRow.appendChild(badge);
     });
     body.appendChild(badgeRow);
-
-    body.appendChild(createCardActions(item));
 
     card.appendChild(coverWrap);
     card.appendChild(body);
@@ -391,37 +418,33 @@
     parent.appendChild(span);
   }
 
-  function createCardActions(item) {
-    var actions = document.createElement("div");
-    actions.className = "card-actions";
-
-    var favoriteButton = document.createElement("button");
-    favoriteButton.type = "button";
-    favoriteButton.className = "button favorite-inline-button";
-    favoriteButton.classList.toggle("is-active", item.favorite);
-    favoriteButton.title = "お気に入り";
-    favoriteButton.setAttribute("aria-label", "お気に入りを切り替え");
-    favoriteButton.textContent = "★";
-    favoriteButton.addEventListener("click", function () {
-      updateItem(item.id, { favorite: !item.favorite });
+  function createMakerButton(maker) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "maker-button";
+    button.textContent = maker;
+    button.title = maker + "で検索";
+    button.addEventListener("click", function (event) {
+      event.stopPropagation();
+      state.filters.query = maker;
+      elements.searchInput.value = maker;
+      render();
     });
-    actions.appendChild(favoriteButton);
+    return button;
+  }
 
+  function openItemUrl(url) {
     var link = document.createElement("a");
-    link.className = "link-button";
-    link.href = item.url || "#";
+    link.href = url;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.textContent = "開く";
-    if (!item.url) {
-      link.setAttribute("aria-disabled", "true");
-      link.addEventListener("click", function (event) {
-        event.preventDefault();
-      });
-    }
-    actions.appendChild(link);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
 
-    return actions;
+  function isInteractiveTarget(target) {
+    return Boolean(target && target.closest && target.closest("button, a, input, select, textarea, label"));
   }
 
   function updateItem(id, patch, silent) {

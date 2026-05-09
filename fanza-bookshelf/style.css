@@ -208,6 +208,20 @@ input[type="checkbox"] {
   box-shadow: var(--shadow);
 }
 
+.book-card[role="link"] {
+  cursor: pointer;
+}
+
+.book-card[role="link"]:hover,
+.book-card[role="link"]:focus {
+  border-color: var(--accent-strong);
+}
+
+.book-card[role="link"]:focus {
+  outline: 2px solid rgb(77 163 255 / 45%);
+  outline-offset: 2px;
+}
+
 .cover-wrap {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -238,15 +252,31 @@ input[type="checkbox"] {
   background: linear-gradient(135deg, #222836, #12151c);
 }
 
-.favorite-inline-button {
-  width: 30px;
-  min-height: 30px;
-  padding: 0;
+.favorite-hover-button {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 50%;
+  background: rgb(0 0 0 / 62%);
   color: #d5dae4;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-2px);
+  transition: opacity 140ms ease, transform 140ms ease;
 }
 
-.favorite-inline-button.is-active {
+.book-card:hover .favorite-hover-button,
+.book-card:focus-within .favorite-hover-button {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.favorite-hover-button.is-active {
   color: #ffd76b;
 }
 
@@ -275,6 +305,25 @@ input[type="checkbox"] {
   font-size: 0.74rem;
 }
 
+.maker-button {
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maker-button:hover,
+.maker-button:focus {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
 .badge-row {
   display: flex;
   flex-wrap: wrap;
@@ -295,13 +344,6 @@ input[type="checkbox"] {
   border: 1px solid rgb(255 255 255 / 10%);
   background: #2a3140;
   color: #dce3ef;
-}
-
-.card-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
 }
 
 .empty-state {
